@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - Online Banking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        .transaction-item {
+            transition: background-color 0.2s ease;
+        }
+
+        .transaction-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold">SecureBank</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm opacity-90">Welcome, John Doe</span>
+                    <button onclick="logout()"
+                        class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Account Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Balance Card -->
+            <div class="balance-card text-white rounded-xl p-6 card-hover">
+                <h3 class="text-lg font-medium opacity-90 mb-2">Total Balance</h3>
+                <p class="text-3xl font-bold mb-4" id="totalBalance">$12,847.50</p>
+                <div class="flex items-center text-sm opacity-90">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" />
+                    </svg>
+                    +2.5% from last month
+                </div>
+            </div>
+
+            <!-- Checking Account -->
+            <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Checking Account</h3>
+                <p class="text-2xl font-bold text-gray-900 mb-2" id="checkingBalance">$8,247.50</p>
+                <p class="text-sm text-gray-500">Account: ****1234</p>
+            </div>
+
+            <!-- Savings Account -->
+            <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Savings Account</h3>
+                <p class="text-2xl font-bold text-gray-900 mb-2" id="savingsBalance">$4,600.00</p>
+                <p class="text-sm text-gray-500">Account: ****5678</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button onclick="openTransferModal()"
+                    class="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                    <svg class="w-8 h-8 text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">Transfer</span>
+                </button>
+
+                <button onclick="openPayBillModal()"
+                    class="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200">
+                    <svg class="w-8 h-8 text-green-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">Pay Bills</span>
+                </button>
+
+                <button onclick="openDepositModal()"
+                    class="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200">
+                    <svg class="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">Deposit</span>
+                </button>
+
+                <button onclick="viewStatements()"
+                    class="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
+                    <svg class="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">Statements</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Recent Transactions</h2>
+                <button onclick="viewAllTransactions()"
+                    class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">View All</button>
+            </div>
+            <div class="space-y-3" id="transactionsList">
+                <!-- Transactions will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transferModal" class="modal">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 animate-fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Transfer Money</h3>
+                <button onclick="closeModal('transferModal')" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form onsubmit="processTransfer(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">From Account</label>
+                        <select
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option>Checking Account (****1234)</option>
+                            <option>Savings Account (****5678)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To Account</label>
+                        <select
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option>Savings Account (****5678)</option>
+                            <option>Checking Account (****1234)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                        <input type="number" step="0.01" placeholder="0.00"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                        <input type="text" placeholder="Transfer description"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('transferModal')"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Transfer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pay Bill Modal -->
+    <div id="payBillModal" class="modal">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 animate-fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Pay Bills</h3>
+                <button onclick="closeModal('payBillModal')" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form onsubmit="processBillPayment(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payee</label>
+                        <select
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <option>Electric Company</option>
+                            <option>Water Utility</option>
+                            <option>Internet Provider</option>
+                            <option>Credit Card</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                        <input type="number" step="0.01" placeholder="0.00"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Date</label>
+                        <input type="date"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            required>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('payBillModal')"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Pay Bill
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 animate-fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Make Deposit</h3>
+                <button onclick="closeModal('depositModal')" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form onsubmit="processDeposit(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deposit To</label>
+                        <select
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option>Checking Account (****1234)</option>
+                            <option>Savings Account (****5678)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                        <input type="number" step="0.01" placeholder="0.00"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deposit Type</label>
+                        <select
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option>Check Deposit</option>
+                            <option>Cash Deposit</option>
+                            <option>Direct Deposit</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('depositModal')"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Deposit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample transaction data
+        const transactions = [
+            { id: 1, description: "Grocery Store", amount: -87.45, date: "2024-01-15", type: "debit" },
+            { id: 2, description: "Salary Deposit", amount: 3200.00, date: "2024-01-15", type: "credit" },
+            { id: 3, description: "Electric Bill", amount: -125.30, date: "2024-01-14", type: "debit" },
+            { id: 4, description: "ATM Withdrawal", amount: -100.00, date: "2024-01-13", type: "debit" },
+            { id: 5, description: "Online Transfer", amount: -500.00, date: "2024-01-12", type: "debit" },
+            { id: 6, description: "Interest Payment", amount: 15.75, date: "2024-01-10", type: "credit" }
+        ];
+
+        // Account balances
+        let accounts = {
+            checking: 8247.50,
+            savings: 4600.00
+        };
+
+        // Initialize the app
+        function initializeApp() {
+            displayTransactions();
+            updateBalances();
+        }
+
+        // Display recent transactions
+        function displayTransactions() {
+            const transactionsList = document.getElementById('transactionsList');
+            transactionsList.innerHTML = '';
+
+            transactions.slice(0, 6).forEach(transaction => {
+                const transactionElement = document.createElement('div');
+                transactionElement.className = 'transaction-item flex items-center justify-between p-3 rounded-lg';
+
+                const isCredit = transaction.type === 'credit';
+                const amountColor = isCredit ? 'text-green-600' : 'text-red-600';
+                const amountPrefix = isCredit ? '+' : '';
+
+                transactionElement.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 ${isCredit ? 'bg-green-100' : 'bg-red-100'} rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 ${isCredit ? 'text-green-600' : 'text-red-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                ${isCredit ?
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>' :
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>'
+                    }
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">${transaction.description}</p>
+                            <p class="text-sm text-gray-500">${formatDate(transaction.date)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold ${amountColor}">${amountPrefix}$${Math.abs(transaction.amount).toFixed(2)}</p>
+                    </div>
+                `;
+
+                transactionsList.appendChild(transactionElement);
+            });
+        }
+
+        // Update account balances
+        function updateBalances() {
+            const total = accounts.checking + accounts.savings;
+            document.getElementById('totalBalance').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('checkingBalance').textContent = `$${accounts.checking.toFixed(2)}`;
+            document.getElementById('savingsBalance').textContent = `$${accounts.savings.toFixed(2)}`;
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Modal functions
+        function openTransferModal() {
+            document.getElementById('transferModal').classList.add('active');
+        }
+
+        function openPayBillModal() {
+            document.getElementById('payBillModal').classList.add('active');
+        }
+
+        function openDepositModal() {
+            document.getElementById('depositModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Process transfer
+        function processTransfer(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const amount = parseFloat(event.target.querySelector('input[type="number"]').value);
+
+            // Add transaction
+            const newTransaction = {
+                id: transactions.length + 1,
+                description: "Account Transfer",
+                amount: -amount,
+                date: new Date().toISOString().split('T')[0],
+                type: "debit"
+            };
+
+            transactions.unshift(newTransaction);
+            displayTransactions();
+            closeModal('transferModal');
+
+            showNotification('Transfer completed successfully!', 'success');
+            event.target.reset();
+        }
+
+        // Process bill payment
+        function processBillPayment(event) {
+            event.preventDefault();
+            const amount = parseFloat(event.target.querySelector('input[type="number"]').value);
+            const payee = event.target.querySelector('select').value;
+
+            // Add transaction
+            const newTransaction = {
+                id: transactions.length + 1,
+                description: `Bill Payment - ${payee}`,
+                amount: -amount,
+                date: new Date().toISOString().split('T')[0],
+                type: "debit"
+            };
+
+            transactions.unshift(newTransaction);
+            accounts.checking -= amount;
+            displayTransactions();
+            updateBalances();
+            closeModal('payBillModal');
+
+            showNotification('Bill payment scheduled successfully!', 'success');
+            event.target.reset();
+        }
+
+        // Process deposit
+        function processDeposit(event) {
+            event.preventDefault();
+            const amount = parseFloat(event.target.querySelector('input[type="number"]').value);
+            const depositType = event.target.querySelectorAll('select')[1].value;
+
+            // Add transaction
+            const newTransaction = {
+                id: transactions.length + 1,
+                description: depositType,
+                amount: amount,
+                date: new Date().toISOString().split('T')[0],
+                type: "credit"
+            };
+
+            transactions.unshift(newTransaction);
+            accounts.checking += amount;
+            displayTransactions();
+            updateBalances();
+            closeModal('depositModal');
+
+            showNotification('Deposit processed successfully!', 'success');
+            event.target.reset();
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 animate-fade-in ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // View all transactions
+        function viewAllTransactions() {
+            showNotification('All transactions view would open here', 'success');
+        }
+
+        // View statements
+        function viewStatements() {
+            showNotification('Statements view would open here', 'success');
+        }
+
+        // Logout function
+        function logout() {
+            showNotification('Logging out...', 'success');
+            setTimeout(() => {
+                showNotification('You have been logged out successfully', 'success');
+            }, 1000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function (event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        });
+
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'96c9f52e07d8b7f7',t:'MTc1NDc3MDg2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+</body>
+
+</html>
